@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gym-tracker"
+version = "0.1.0"
+description = "A small FastAPI + Shiny for Python app to track gym progress, weights and body measurements."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [ { name = "Your Name", email = "you@example.com" } ]
+dependencies = [
+  "fastapi>=0.95",
+  "uvicorn[standard]>=0.22",
+  "sqlmodel>=0.0.8",
+  "aiosqlite>=0.17",
+  "httpx>=0.24",
+  "shiny>=1.0.0",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+  "jinja2>=3.1.6",
+  "python-dotenv>=1.2.1",
+  "libsass>=0.23.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests*"]

@@ -1,0 +1,15 @@
+fastapi>=0.95
+uvicorn[standard]>=0.22
+sqlmodel>=0.0.8
+aiosqlite>=0.17
+httpx>=0.24
+shiny>=1.0.0
+pandas>=2.0
+matplotlib>=3.7
+pytest>=7.0
+shiny
+pandas
+plotly
+# Google Sheets (only if using Sheets or both)
+gspread
+google-auth

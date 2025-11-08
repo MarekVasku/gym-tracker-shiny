@@ -1,6 +1,6 @@
 # Gym Tracker (Shiny for Python)
 
-A compact, local-first gym tracking app built with Shiny for Python. Track Big 3 lifts, bodyweight (with timestamp), and a small set of body measurements. Designed for data scientists who want a clean UI and simple persistence (Google Sheets, SQLite, or both).
+Gym Tracker is a compact, local-first application built with Shiny for Python. It records Big 3 lifts, timestamped bodyweight entries, and a focused set of body measurements. Persistence is configurable (Google Sheets, SQLite, or both).
 
 Table of Contents
 -----------------
@@ -77,5 +77,3 @@ License
 -------
 
 MIT-style (adjust as needed).
-
-If you'd like, I can also add a small `CONTRIBUTING.md` and a few GitHub-friendly badges (CI, python version) — tell me which services you use and I'll add them.

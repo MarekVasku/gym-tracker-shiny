@@ -1,11 +1,15 @@
 from __future__ import annotations
 import uuid, json, sqlite3
+from datetime import date, datetime
 from dataclasses import dataclass
 from typing import Protocol
 import pandas as pd
+from pydantic import ValidationError
 
 from .utils import REQUIRED_TABS
-from .config import SCOPES, sheet_config, db_path, persist_target
+from .config import db_path
+from .logger import logger
+from .models import LiftEntry, BodyweightEntry, MeasurementEntry, InBodyEntry
 
 # Lazy imports for Sheets
 try:
@@ -22,81 +26,14 @@ class Repo(Protocol):
     def delete(self, tab: str, row_id: str) -> None: ...
 
 
-class SheetsRepo:
-    def __init__(self, sheet_url: str, creds_json: str):
-        if gspread is None or Credentials is None:
-            raise RuntimeError("gspread/google-auth not installed. pip install gspread google-auth")
-        info = json.loads(creds_json)
-        creds = Credentials.from_service_account_info(info, scopes=SCOPES)
-        self.gc = gspread.authorize(creds)
-        self.sh = self.gc.open_by_url(sheet_url)
-        self._ensure_tabs()
-
-    def _ensure_tabs(self):
-        for tab, headers in REQUIRED_TABS.items():
-            try:
-                ws = self.sh.worksheet(tab)
-            except Exception:
-                ws = self.sh.add_worksheet(title=tab, rows=1000, cols=len(headers) + 2)
-                ws.append_row(headers)
-            row1 = self.sh.worksheet(tab).row_values(1)
-            if row1[: len(headers)] != headers:
-                try:
-                    self.sh.worksheet(tab).delete_rows(1)
-                except Exception:
-                    pass
-                self.sh.worksheet(tab).insert_row(headers, 1)
-
-    def _ws(self, tab: str):
-        return self.sh.worksheet(tab)
-
-    def read_df(self, tab: str) -> pd.DataFrame:
-        rows = self._ws(tab).get_all_records()
-        df = pd.DataFrame(rows)
-        if df.empty:
-            return pd.DataFrame(columns=REQUIRED_TABS[tab])
-        if "date" in df.columns:
-            df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
-        return df
-
-    def append(self, tab: str, payload: dict) -> str:
-        ws = self._ws(tab)
-        headers = REQUIRED_TABS[tab]
-        if not payload.get("id"):
-            payload["id"] = str(uuid.uuid4())
-        ws.append_row([payload.get(h, "") for h in headers])
-        return payload["id"]
-
-    def update(self, tab: str, row_id: str, payload: dict) -> None:
-        ws = self._ws(tab)
-        data = ws.get_all_records()
-        headers = REQUIRED_TABS[tab]
-        idx = None
-        for i, r in enumerate(data, start=2):
-            if str(r.get("id")) == str(row_id):
-                idx = i
-                break
-        if idx is None:
-            raise KeyError(f"Row id {row_id} not found in {tab}")
-        current = data[idx - 2]
-        merged = {h: payload.get(h, current.get(h, "")) for h in headers}
-        merged["id"] = row_id
-        ws.update(f"A{idx}:{chr(64+len(headers))}{idx}", [[merged.get(h, "") for h in headers]])
-
-    def delete(self, tab: str, row_id: str) -> None:
-        ws = self._ws(tab)
-        data = ws.get_all_records()
-        for i, r in enumerate(data, start=2):
-            if str(r.get("id")) == str(row_id):
-                ws.delete_rows(i)
-                return
-        raise KeyError(f"Row id {row_id} not found in {tab}")
+# Google Sheets support removed — this project now uses SQLite only.
 
 
 class SQLiteRepo:
     def __init__(self, path: str | None = None):
         self.path = path or db_path()
         self._init_db()
+        logger.info(f"SQLiteRepo initialized at {self.path}")
 
     def _conn(self):
         return sqlite3.connect(self.path, check_same_thread=False)
@@ -125,13 +62,36 @@ class SQLiteRepo:
                 CREATE TABLE IF NOT EXISTS Measurements (
                     id TEXT PRIMARY KEY,
                     date TEXT,
+                    weight_kg REAL,
                     neck_cm REAL,
                     shoulder_cm REAL,
                     chest_cm REAL,
                     waist_cm REAL,
                     biceps_cm REAL,
                     thigh_cm REAL,
-                    calf_cm REAL,
+                    calf_cm REAL
+                )""")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS InBody (
+                    id TEXT PRIMARY KEY,
+                    date TEXT,
+                    inbody_score REAL,
+                    weight_kg REAL,
+                    skeletal_muscle_kg_total REAL,
+                    body_fat_kg_total REAL,
+                    body_fat_percent REAL,
+                    visceral_fat_level REAL,
+                    bmr_kcal REAL,
+                    muscle_right_arm_kg REAL,
+                    muscle_left_arm_kg REAL,
+                    muscle_trunk_kg REAL,
+                    muscle_right_leg_kg REAL,
+                    muscle_left_leg_kg REAL,
+                    fat_right_arm_kg REAL,
+                    fat_left_arm_kg REAL,
+                    fat_trunk_kg REAL,
+                    fat_right_leg_kg REAL,
+                    fat_left_leg_kg REAL,
                     notes TEXT
                 )""")
             # Ensure any missing columns are added to existing tables (simple migrations)
@@ -155,41 +115,72 @@ class SQLiteRepo:
             ensure_columns("Lifts", REQUIRED_TABS["Lifts"])
             ensure_columns("Bodyweight", REQUIRED_TABS["Bodyweight"])
             ensure_columns("Measurements", REQUIRED_TABS["Measurements"])
+            ensure_columns("InBody", REQUIRED_TABS["InBody"])
 
     def read_df(self, tab: str) -> pd.DataFrame:
+        logger.debug(f"SQLite read from table: {tab}")
         with self._conn() as con:
             df = pd.read_sql_query(f"SELECT * FROM {tab}", con)
         if df.empty:
+            logger.debug(f"SQLite table {tab} is empty")
             return pd.DataFrame(columns=REQUIRED_TABS[tab])
         if "date" in df.columns:
             df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+        logger.debug(f"SQLite read {len(df)} rows from {tab}")
         return df
 
     def append(self, tab: str, payload: dict) -> str:
+        logger.debug(f"SQLite append to {tab}: {payload}")
+        # Validate on insert
+        _validate_payload(tab, payload)
+
         row_id = payload.get("id") or str(uuid.uuid4())
         payload = {**payload, "id": row_id}
         cols = REQUIRED_TABS[tab]
         placeholders = ",".join(["?"] * len(cols))
+        # Serialize date/datetime values to ISO format to avoid sqlite3 date adapter deprecation
+        values = []
+        for c in cols:
+            v = payload.get(c)
+            if isinstance(v, (date, datetime)):
+                values.append(v.isoformat())
+            else:
+                values.append(v)
         with self._conn() as con:
             con.execute(
                 f"INSERT OR REPLACE INTO {tab} ({','.join(cols)}) VALUES ({placeholders})",
-                tuple(payload.get(c) for c in cols),
+                tuple(values),
             )
+        logger.info(f"SQLite appended row id={row_id} to {tab}")
         return row_id
 
     def update(self, tab: str, row_id: str, payload: dict) -> None:
+        logger.debug(f"SQLite update {tab} id={row_id} with {payload}")
         sets = [f"{k} = ?" for k in payload.keys() if k != "id"]
         if not sets:
+            logger.debug("No fields provided for update; skipping")
             return
+        # Serialize date/datetime values to ISO format when updating
+        params = []
+        for k in (k for k in payload.keys() if k != "id"):
+            v = payload[k]
+            if isinstance(v, (date, datetime)):
+                params.append(v.isoformat())
+            else:
+                params.append(v)
+        params = tuple(params) + (row_id,)
         with self._conn() as con:
             con.execute(
                 f"UPDATE {tab} SET {', '.join(sets)} WHERE id = ?",
-                tuple(payload[k] for k in payload.keys() if k != "id") + (row_id,),
+                params,
             )
+        logger.info(f"SQLite updated {tab} id={row_id}")
 
     def delete(self, tab: str, row_id: str) -> None:
+        logger.debug(f"SQLite delete from {tab} id={row_id}")
         with self._conn() as con:
             con.execute(f"DELETE FROM {tab} WHERE id = ?", (row_id,))
+        logger.info(f"SQLite deleted {tab} id={row_id}")
 
 
 class CombinedRepo:
@@ -205,7 +196,7 @@ class CombinedRepo:
         try:
             self.secondary.append(tab, {**payload, "id": row_id})
         except Exception:
-            pass
+            logger.warning(f"Secondary append failed for {tab} id={row_id}", exc_info=True)
         return row_id
 
     def update(self, tab: str, row_id: str, payload: dict) -> None:
@@ -213,23 +204,40 @@ class CombinedRepo:
         try:
             self.secondary.update(tab, row_id, payload)
         except Exception:
-            pass
+            logger.warning(f"Secondary update failed for {tab} id={row_id}", exc_info=True)
 
     def delete(self, tab: str, row_id: str) -> None:
         self.primary.delete(tab, row_id)
         try:
             self.secondary.delete(tab, row_id)
         except Exception:
-            pass
+            logger.warning(f"Secondary delete failed for {tab} id={row_id}", exc_info=True)
 
 
 def repo_factory() -> Repo:
-    target = persist_target()
-    if target == "sqlite":
-        return SQLiteRepo()
-    if target == "sheet":
-        url, creds = sheet_config()
-        return SheetsRepo(url, creds)
-    # both
-    url, creds = sheet_config()
-    return CombinedRepo(SheetsRepo(url, creds), SQLiteRepo())
+    """Return a SQLite-only repository (Sheets support removed)."""
+    return SQLiteRepo()
+
+
+# --- Validation helper ---
+def _validate_payload(tab: str, payload: dict) -> None:
+    """Validate payload using Pydantic models for inserts.
+
+    Raises ValidationError if invalid. For updates we skip strict validation
+    as partial updates may not include required fields.
+    """
+    model_map = {
+        "Lifts": LiftEntry,
+        "Bodyweight": BodyweightEntry,
+        "Measurements": MeasurementEntry,
+        "InBody": InBodyEntry,
+    }
+    model = model_map.get(tab)
+    if not model:
+        logger.debug(f"No validation model registered for tab {tab}")
+        return
+    try:
+        model(**payload)  # type: ignore[arg-type]
+    except ValidationError:
+        logger.exception(f"Validation failed for tab={tab} payload={payload}")
+        raise

@@ -2,26 +2,11 @@ from __future__ import annotations
 import os, json
 from typing import Literal, cast
 
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-]
-
-PersistTarget = Literal["sheet", "sqlite", "both"]
+PersistTarget = Literal["sqlite"]
 
 def persist_target() -> PersistTarget:
-    val = os.environ.get("PERSIST_TARGET", "sheet").lower().strip()
-    if val in {"sheet", "sqlite", "both"}:
-        return cast(PersistTarget, val)
-    return cast(PersistTarget, "sheet")
-
-
-def sheet_config() -> tuple[str, str]:
-    url = os.environ.get("GYM_SHEET_URL", "")
-    creds = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "")
-    if not url or not creds:
-        raise RuntimeError("Missing GYM_SHEET_URL or GOOGLE_SERVICE_ACCOUNT_JSON for Sheets mode.")
-    return url, creds
+    """Return the persistence target. Project uses SQLite-only."""
+    return cast(PersistTarget, "sqlite")
 
 
 def db_path() -> str:

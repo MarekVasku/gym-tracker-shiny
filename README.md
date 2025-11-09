@@ -39,9 +39,8 @@ export PERSIST_TARGET=sqlite
 # Path to sqlite DB (default: ./gym_tracker.db)
 export DB_PATH=./gym_tracker.db
 
-# If using Google Sheets (set PERSIST_TARGET=sheet or both):
-export GYM_SHEET_URL='https://docs.google.com/...'
-export GOOGLE_SERVICE_ACCOUNT_JSON='{"type":"service_account", ... }'
+# Persistence is SQLite by default. Configure the database path as needed:
+export DB_PATH=./gym_tracker.db
 ```
 
 Schema migration: removing legacy measurement columns
@@ -65,7 +64,16 @@ The migration recreates the `Measurements` table to match the fields defined in 
 Development & tests
 -------------------
 
-- Tests (if added) can be run with pytest. Example:
+- Quick dev loop with Makefile:
+
+```bash
+make install      # create venv and install deps
+make test         # run tests
+make coverage     # run tests with coverage report
+make run          # start the Shiny app with reload
+```
+
+- Or run pytest directly:
 
 ```bash
 pytest -q

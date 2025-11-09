@@ -36,6 +36,13 @@ REQUIRED_TABS: Dict[str, List[str]] = {
     "Lifts": ["id", "date", "exercise", "weight_kg", "reps", "notes"],
     "Bodyweight": ["id", "date", "time", "weight_kg", "notes"],
     "Measurements": [
-        "id", "date", "neck_cm", "shoulder_cm", "chest_cm", "waist_cm", "biceps_cm", "thigh_cm", "calf_cm"
+        "id", "date", "weight_kg", "neck_cm", "shoulder_cm", "chest_cm", "waist_cm", "biceps_cm", "thigh_cm", "calf_cm"
+    ],
+    "InBody": [
+        "id", "date", "inbody_score", "weight_kg", "skeletal_muscle_kg_total", "body_fat_kg_total",
+        "body_fat_percent", "visceral_fat_level", "bmr_kcal",
+        "muscle_right_arm_kg", "muscle_left_arm_kg", "muscle_trunk_kg", "muscle_right_leg_kg", "muscle_left_leg_kg",
+        "fat_right_arm_kg", "fat_left_arm_kg", "fat_trunk_kg", "fat_right_leg_kg", "fat_left_leg_kg",
+        "notes"
     ],
 }

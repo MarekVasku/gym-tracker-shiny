@@ -6,10 +6,12 @@ httpx>=0.24
 shiny>=1.0.0
 pandas>=2.0
 matplotlib>=3.7
+plotly>=5.17
+shinywidgets>=0.3.3
 pytest>=7.0
-shiny
-pandas
-plotly
-# Google Sheets (only if using Sheets or both)
-gspread
-google-auth
+pytest-cov>=4.1
+jinja2>=3.1.6
+python-dotenv>=1.2.1
+libsass>=0.23.0
+pydantic>=1.10,<2.0
+# Google Sheets removed; use SQLite only

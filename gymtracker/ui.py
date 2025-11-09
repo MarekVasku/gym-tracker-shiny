@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import date, datetime
 from shiny import ui
+from typing import Any, cast
 from shinywidgets import output_widget
 from .utils import BIG3
 
@@ -46,7 +47,7 @@ app_ui = ui.page_navbar(
                 theme="info",
                 class_="vb-center"
             ),
-            col_widths={"lg": [3, 3, 3, 3]},
+            col_widths=cast(Any, {"lg": [3, 3, 3, 3]}),
         ),
         ui.layout_columns(
             ui.card(
@@ -78,7 +79,7 @@ app_ui = ui.page_navbar(
                 ),
                 output_widget("plot_bw"),
             ),
-            col_widths={"lg": [7, 5]},
+            col_widths=cast(Any, {"lg": [7, 5]}),
         ),
         ui.layout_columns(
             ui.card(
@@ -99,7 +100,7 @@ app_ui = ui.page_navbar(
                     ui.nav_panel("Measurements", ui.output_data_frame("tbl_meas")),
                 ),
             ),
-            col_widths={"lg": [7, 5]},
+            col_widths=cast(Any, {"lg": [7, 5]}),
         ),
     ),
     ui.nav_panel(
@@ -154,7 +155,7 @@ app_ui = ui.page_navbar(
                 theme="primary",
                 class_="vb-center"
             ),
-            col_widths={"lg": [2, 2, 2, 2, 2, 2]},
+            col_widths=cast(Any, {"lg": [2, 2, 2, 2, 2, 2]}),
         ),
         
         # Main Composition Trends + Stats Panel
@@ -169,7 +170,7 @@ app_ui = ui.page_navbar(
                 ui.output_ui("ib_progress_stats"),
                 fill=False,
             ),
-            col_widths={"lg": [8, 4]},
+            col_widths=cast(Any, {"lg": [8, 4]}),
         ),
         
         # Segmental Analysis Row
@@ -184,7 +185,7 @@ app_ui = ui.page_navbar(
                 ui.div(output_widget("inbody_segmental_fat", height="450px", fill=False), style="height:450px;", class_="ib-h"),
                 fill=False,
             ),
-            col_widths={"lg": [6, 6]},
+            col_widths=cast(Any, {"lg": [6, 6]}),
         ),
         
         # BMR & Score + Body Composition Ratios
@@ -199,7 +200,7 @@ app_ui = ui.page_navbar(
                 ui.div(output_widget("inbody_ratios", height="480px", fill=False), style="height:480px;", class_="ib-h"),
                 fill=False,
             ),
-            col_widths={"lg": [6, 6]},
+            col_widths=cast(Any, {"lg": [6, 6]}),
         ),
         
         # Health Metrics Row
@@ -214,7 +215,7 @@ app_ui = ui.page_navbar(
                 ui.div(output_widget("inbody_asymmetry", height="450px", fill=False), style="height:450px;", class_="ib-h"),
                 fill=False,
             ),
-            col_widths={"lg": [6, 6]},
+            col_widths=cast(Any, {"lg": [6, 6]}),
         ),
         
         # Advanced Analytics Row - 3D Body Composition Phase + Correlation Matrix
@@ -229,7 +230,7 @@ app_ui = ui.page_navbar(
                 ui.div(output_widget("inbody_correlation_matrix", height="520px", fill=False), style="height:520px;", class_="ib-h"),
                 fill=False,
             ),
-            col_widths={"lg": [6, 6]},
+            col_widths=cast(Any, {"lg": [6, 6]}),
         ),
         
         # Trends & Predictions Row
@@ -244,7 +245,7 @@ app_ui = ui.page_navbar(
                 ui.div(output_widget("inbody_recomp_efficiency", height="450px", fill=False), style="height:450px;", class_="ib-h"),
                 fill=False,
             ),
-            col_widths={"lg": [6, 6]},
+            col_widths=cast(Any, {"lg": [6, 6]}),
         ),
         
         # Advanced Segmental Analysis
@@ -259,7 +260,7 @@ app_ui = ui.page_navbar(
                 ui.output_ui("ib_advanced_metrics"),
                 fill=False,
             ),
-            col_widths={"lg": [7, 5]},
+            col_widths=cast(Any, {"lg": [7, 5]}),
         ),
         
         # Percentile Rankings & Benchmarks
@@ -269,7 +270,7 @@ app_ui = ui.page_navbar(
                 ui.div(output_widget("inbody_percentile_chart", height="400px", fill=False), style="height:400px;", class_="ib-h"),
                 fill=False,
             ),
-            col_widths={"lg": [12]},
+            col_widths=cast(Any, {"lg": [12]}),
         ),
         
         # Data Table at Bottom
@@ -279,7 +280,7 @@ app_ui = ui.page_navbar(
                 ui.output_data_frame("tbl_inbody"),
                 fill=False,
             ),
-            col_widths={"lg": [12]},
+            col_widths=cast(Any, {"lg": [12]}),
         ),
         
     ),
@@ -411,7 +412,7 @@ app_ui = ui.page_navbar(
                     ),
                 ),
             ),
-            col_widths={"lg": [4, 4, 4]},
+            col_widths=cast(Any, {"lg": [4, 4, 4]}),
         ),
         ui.layout_columns(
             ui.card(
@@ -471,7 +472,7 @@ app_ui = ui.page_navbar(
                     ),
                 ),
             ),
-            col_widths={"lg": [12]},
+            col_widths=cast(Any, {"lg": [12]}),
         ),
     ),
     ui.nav_spacer(),

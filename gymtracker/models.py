@@ -7,7 +7,7 @@ we keep the v1 API (`validator`, `Config`) to match the pinned dependency
 and avoid language-server/runtime mismatches.
 """
 from pydantic import BaseModel, Field, validator
-from datetime import date
+import datetime
 from typing import Optional
 from gymtracker.utils import BIG3
 
@@ -16,7 +16,7 @@ class LiftEntry(BaseModel):
     """Validation model for lift entries."""
 
     id: Optional[str] = None
-    date: date
+    date: datetime.date
     exercise: str
     weight_kg: float = Field(gt=0, description="Weight must be positive")
     reps: int = Field(gt=0, le=50, description="Reps must be between 1-50")
@@ -29,8 +29,8 @@ class LiftEntry(BaseModel):
         return v
 
     @validator("date")
-    def no_future_dates(cls, v: date) -> date:
-        if v > date.today():
+    def no_future_dates(cls, v: datetime.date) -> datetime.date:
+        if v > datetime.date.today():
             raise ValueError("Cannot log future dates")
         return v
 
@@ -52,14 +52,14 @@ class BodyweightEntry(BaseModel):
     """Validation model for bodyweight entries."""
 
     id: Optional[str] = None
-    date: date
+    date: datetime.date
     time: str = Field(pattern=r"^\d{2}:\d{2}$", description="Time in HH:MM format")
     weight_kg: float = Field(gt=0, lt=500, description="Weight must be between 0-500kg")
     notes: Optional[str] = None
 
     @validator("date")
-    def no_future_dates(cls, v: date) -> date:
-        if v > date.today():
+    def no_future_dates(cls, v: datetime.date) -> datetime.date:
+        if v > datetime.date.today():
             raise ValueError("Cannot log future dates")
         return v
 
@@ -80,7 +80,7 @@ class MeasurementEntry(BaseModel):
     """Validation model for body measurement entries."""
 
     id: Optional[str] = None
-    date: date
+    date: datetime.date
     weight_kg: float = Field(gt=0, lt=500)
     neck_cm: Optional[float] = Field(None, gt=0, lt=100)
     shoulder_cm: Optional[float] = Field(None, gt=0, lt=200)
@@ -91,8 +91,8 @@ class MeasurementEntry(BaseModel):
     calf_cm: Optional[float] = Field(None, gt=0, lt=100)
 
     @validator("date")
-    def no_future_dates(cls, v: date) -> date:
-        if v > date.today():
+    def no_future_dates(cls, v: datetime.date) -> datetime.date:
+        if v > datetime.date.today():
             raise ValueError("Cannot log future dates")
         return v
 
@@ -101,7 +101,7 @@ class InBodyEntry(BaseModel):
     """Validation model for InBody scan entries."""
 
     id: Optional[str] = None
-    date: date
+    date: datetime.date
     inbody_score: float = Field(ge=0, le=100, description="InBody score 0-100")
     weight_kg: float = Field(gt=0, lt=500)
     skeletal_muscle_kg_total: float = Field(gt=0, lt=200)
@@ -127,8 +127,8 @@ class InBodyEntry(BaseModel):
     notes: Optional[str] = None
 
     @validator("date")
-    def no_future_dates(cls, v: date) -> date:
-        if v > date.today():
+    def no_future_dates(cls, v: datetime.date) -> datetime.date:
+        if v > datetime.date.today():
             raise ValueError("Cannot log future dates")
         return v
 

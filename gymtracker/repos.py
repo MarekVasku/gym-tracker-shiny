@@ -131,7 +131,7 @@ class SQLiteRepo:
         cols = REQUIRED_TABS[tab]
         placeholders = ",".join(["?"] * len(cols))
         # Serialize date/datetime values to ISO format to avoid sqlite3 date adapter deprecation
-        values = []
+        values: list[object] = []
         for c in cols:
             v = payload.get(c)
             if isinstance(v, (date, datetime)):
@@ -153,14 +153,14 @@ class SQLiteRepo:
             logger.debug("No fields provided for update; skipping")
             return
         # Serialize date/datetime values to ISO format when updating
-        params = []
+        params_list: list[object] = []
         for k in (k for k in payload.keys() if k != "id"):
             v = payload[k]
             if isinstance(v, (date, datetime)):
-                params.append(v.isoformat())
+                params_list.append(v.isoformat())
             else:
-                params.append(v)
-        params = tuple(params) + (row_id,)
+                params_list.append(v)
+        params = tuple(params_list) + (row_id,)
         with self._conn() as con:
             con.execute(
                 f"UPDATE {tab} SET {', '.join(sets)} WHERE id = ?",

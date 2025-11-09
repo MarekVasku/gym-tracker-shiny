@@ -11,14 +11,6 @@ from .config import db_path
 from .logger import logger
 from .models import LiftEntry, BodyweightEntry, MeasurementEntry, InBodyEntry
 
-# Lazy imports for Sheets
-try:
-    import gspread  # type: ignore
-    from google.oauth2.service_account import Credentials  # type: ignore
-except Exception:  # pragma: no cover
-    gspread = None
-    Credentials = None
-
 class Repo(Protocol):
     def read_df(self, tab: str) -> pd.DataFrame: ...
     def append(self, tab: str, payload: dict) -> str: ...

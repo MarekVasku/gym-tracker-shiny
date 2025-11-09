@@ -109,7 +109,7 @@ A demo CSV is provided at `data/sample_inbody.csv` with 3 measurements for refer
 
 ## Integration
 The InBody feature is fully integrated with the existing app:
-- Uses the same repository pattern (SQLite/Sheets/Combined)
+- Uses the same repository pattern (SQLite/Combined)
 - Follows the same naming conventions
 - Styled consistently with other tabs
 - No modifications to existing Lifts, Bodyweight, or Measurements features
@@ -119,7 +119,7 @@ The InBody feature is fully integrated with the existing app:
 - **Server**: `gymtracker/server.py` - `inbody_df()` reactive calc + 7 render functions
 - **Schema**: `gymtracker/utils.py` - REQUIRED_TABS["InBody"]
 - **Database**: `gymtracker/repos.py` - InBody table creation and migration support
-- **Sample Data**: `data/sample_inbody.csv`
+- **Sample Data**: No demo CSV is included in this repository; import your own CSV or enter measurements manually.
 
 ## Charts Technology
 - Uses Plotly via shinywidgets for interactive visualizations

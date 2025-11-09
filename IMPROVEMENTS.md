@@ -4,7 +4,7 @@
 
 ### Architecture
 - **Good separation of concerns**: UI, server, repos, config, utils in separate modules
-- **Repository pattern**: Clean abstraction over data persistence (Sheets/SQLite)
+- **Repository pattern**: Clean abstraction over data persistence (SQLite)
 - **Protocol-based design**: Using Python Protocol for Repo interface
 - **Environment-based configuration**: Proper use of env vars for deployment flexibility
 
@@ -34,7 +34,7 @@ tests/
 ├── __init__.py
 ├── conftest.py              # Pytest fixtures
 ├── test_utils.py            # Test epley formulas
-├── test_repos.py            # Test SQLiteRepo/SheetsRepo
+├── test_repos.py            # Test SQLiteRepo
 ├── test_server.py           # Test reactive logic
 └── fixtures/
     └── sample_data.json
@@ -463,10 +463,7 @@ Issues:
 from pydantic_settings import BaseSettings
 
 class AppConfig(BaseSettings):
-    persist_target: Literal["sheet", "sqlite", "both"] = "sqlite"
     db_path: str = "./gym_tracker.db"
-    gym_sheet_url: str = ""
-    google_service_account_json: str = ""
     log_level: str = "INFO"
     
     class Config:

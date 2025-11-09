@@ -151,7 +151,6 @@ class TestRepoFactory:
     
     def test_factory_respects_db_path(self, temp_db, monkeypatch):
         """Test factory uses correct DB path."""
-        monkeypatch.setenv("PERSIST_TARGET", "sqlite")
         monkeypatch.setenv("DB_PATH", temp_db)
         
         repo = repo_factory()

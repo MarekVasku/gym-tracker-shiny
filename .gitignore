@@ -60,7 +60,6 @@ Thumbs.db
 .DS_Store
 
 # Application specific
-*.sheets
 .cache/
 
 # Testing

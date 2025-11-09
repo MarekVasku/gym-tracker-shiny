@@ -71,6 +71,5 @@ def temp_db():
 @pytest.fixture
 def mock_env_sqlite(temp_db, monkeypatch):
     """Mock environment for SQLite mode."""
-    monkeypatch.setenv("PERSIST_TARGET", "sqlite")
     monkeypatch.setenv("DB_PATH", temp_db)
     return temp_db

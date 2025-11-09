@@ -1,6 +1,6 @@
 # Gym Tracker (Shiny for Python)
 
-Gym Tracker is a compact, local-first application built with Shiny for Python. It records Big 3 lifts, timestamped bodyweight entries, and a focused set of body measurements. Persistence is configurable (Google Sheets, SQLite, or both).
+Gym Tracker is a compact, local-first application built with Shiny for Python. It records Big 3 lifts, timestamped bodyweight entries, and a focused set of body measurements. Persistence uses SQLite (local file) only.
 
 Table of Contents
 -----------------
@@ -27,19 +27,14 @@ Run the app locally (development reload enabled):
 shiny run --reload app.py
 ```
 
-By default the app will look for `DB_PATH` (SQLite) or a Google Sheets config depending on `PERSIST_TARGET` (see below).
+By default the app will look for `DB_PATH` (SQLite).
 
 Environment variables
 ---------------------
-Provide these as needed for your chosen persistence backend. Example (bash):
+Configure the SQLite database path via environment variable. Example (bash):
 
 ```bash
-# Use sqlite, sheet, or both
-export PERSIST_TARGET=sqlite
 # Path to sqlite DB (default: ./gym_tracker.db)
-export DB_PATH=./gym_tracker.db
-
-# Persistence is SQLite by default. Configure the database path as needed:
 export DB_PATH=./gym_tracker.db
 ```
 

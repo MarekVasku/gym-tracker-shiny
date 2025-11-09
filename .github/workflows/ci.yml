@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements.txt pytest-cov mypy ruff isort black pip-audit
+      - name: Run tests
+        run: pytest --cov=gymtracker --cov-report=xml
+      - name: Run ruff
+        run: ruff check .
+      - name: Run isort (check)
+        run: isort --check-only .
+      - name: Run mypy
+        run: mypy .
+      - name: Run pip-audit
+        run: pip-audit --fail
+
+  audit-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install pip-audit
+        run: python -m pip install --upgrade pip && pip install pip-audit
+      - name: Run pip-audit
+        run: pip-audit --format=./pip_audit.json || true
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit
+          path: pip_audit.json

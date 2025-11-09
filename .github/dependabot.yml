@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      - dependency-name: "pydantic"
+        # pin pydantic<2.0 intentionally; update manually on migration
+        versions: ["<2.0"]

@@ -1,5 +1,5 @@
 from __future__ import annotations
-import os, json
+import os
 from typing import Literal, cast
 
 PersistTarget = Literal["sqlite"]

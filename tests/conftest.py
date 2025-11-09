@@ -1,6 +1,5 @@
 """Pytest fixtures and configuration for test suite."""
 import pytest
-import pandas as pd
 from datetime import date
 import tempfile
 import os

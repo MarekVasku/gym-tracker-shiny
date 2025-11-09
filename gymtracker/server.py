@@ -4,7 +4,6 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-import plotly.express as px
 from shiny import Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import render_plotly
 

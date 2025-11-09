@@ -1,6 +1,4 @@
 """Tests for gymtracker.repos module."""
-import pytest
-import pandas as pd
 from datetime import date
 from gymtracker.repos import SQLiteRepo, repo_factory
 from gymtracker.utils import REQUIRED_TABS

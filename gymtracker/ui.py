@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 from datetime import date, datetime
-from shiny import ui
 from typing import Any, cast
+
+from shiny import ui
 from shinywidgets import output_widget
+
 from .utils import BIG3
 
 _NOW = datetime.now()

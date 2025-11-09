@@ -1,7 +1,8 @@
 import dotenv
 from shiny import App
-from gymtracker.ui import app_ui
+
 from gymtracker.server import server
+from gymtracker.ui import app_ui
 
 dotenv.load_dotenv()
 

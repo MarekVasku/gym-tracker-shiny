@@ -1,6 +1,7 @@
 """Tests for gymtracker.utils module."""
 import math
-from gymtracker.utils import epley_1rm, epley_training_max, BIG3, REQUIRED_TABS
+
+from gymtracker.utils import BIG3, REQUIRED_TABS, epley_1rm, epley_training_max
 
 
 class TestEpley1RM:

@@ -1,15 +1,18 @@
 from __future__ import annotations
-import uuid
+
 import sqlite3
+import uuid
 from datetime import date, datetime
 from typing import Protocol
+
 import pandas as pd
 from pydantic import ValidationError
 
-from .utils import REQUIRED_TABS
 from .config import db_path
 from .logger import logger
-from .models import LiftEntry, BodyweightEntry, MeasurementEntry, InBodyEntry
+from .models import BodyweightEntry, InBodyEntry, LiftEntry, MeasurementEntry
+from .utils import REQUIRED_TABS
+
 
 class Repo(Protocol):
     def read_df(self, tab: str) -> pd.DataFrame: ...

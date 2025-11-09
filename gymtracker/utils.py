@@ -1,6 +1,8 @@
 from __future__ import annotations
-from typing import Dict, List
+
 import math
+from typing import Dict, List
+
 
 def epley_1rm(weight_kg: float, reps: int) -> float:
     """Estimate one-repetition maximum (1RM) using the Epley formula.

@@ -1,8 +1,9 @@
 """Pytest fixtures and configuration for test suite."""
-import pytest
-from datetime import date
-import tempfile
 import os
+import tempfile
+from datetime import date
+
+import pytest
 
 
 @pytest.fixture

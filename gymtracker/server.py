@@ -1,14 +1,16 @@
 from __future__ import annotations
-from typing import List, cast
+
 from datetime import datetime
-import pandas as pd
+from typing import List, cast
+
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from shiny import Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import render_plotly
 
-from .utils import epley_1rm, epley_training_max, BIG3, REQUIRED_TABS
 from .repos import Repo, repo_factory
+from .utils import BIG3, REQUIRED_TABS, epley_1rm, epley_training_max
 
 
 def server(input: Inputs, output: Outputs, session: Session):

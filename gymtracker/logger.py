@@ -1,8 +1,8 @@
 """Logging configuration for gym-tracker application."""
 import logging
 import sys
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import Optional
 
 

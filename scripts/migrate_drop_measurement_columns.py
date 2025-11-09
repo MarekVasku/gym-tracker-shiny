@@ -18,14 +18,15 @@ This is SQLite-friendly and does not require external libs.
 """
 
 from __future__ import annotations
+
 import argparse
-import sqlite3
-import shutil
 import os
+import shutil
+import sqlite3
 from datetime import datetime
 
-from gymtracker.utils import REQUIRED_TABS
 from gymtracker.config import db_path as config_db_path
+from gymtracker.utils import REQUIRED_TABS
 
 WANTED = REQUIRED_TABS["Measurements"]
 

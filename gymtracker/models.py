@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import datetime
 from typing import Optional
+
 from pydantic import BaseModel, Field, validator
+
 from gymtracker.utils import BIG3
 
 """Pydantic v1 models for data validation.

@@ -49,9 +49,10 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install pip-audit
-        run: python -m pip install --upgrade pip && pip install pip-audit
+        run: python -m pip install --upgrade pip && pip install -U pip-audit
       - name: Run pip-audit
-        run: pip-audit --format=./pip_audit.json || true
+        # Write JSON output to a file and don't fail the job here; upload step will capture it.
+        run: pip-audit --format=json -o pip_audit.json || true
       - name: Upload audit results
         uses: actions/upload-artifact@v4
         with:

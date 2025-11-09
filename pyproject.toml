@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gym-tracker"
-version = "0.2.0"
+version = "0.3.0"
 description = "A small FastAPI + Shiny for Python app to track gym progress, weights and body measurements."
 readme = "README.md"
 requires-python = ">=3.10"

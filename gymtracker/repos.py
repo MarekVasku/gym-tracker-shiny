@@ -109,6 +109,50 @@ class SQLiteRepo:
             ensure_columns("Measurements", REQUIRED_TABS["Measurements"])
             ensure_columns("InBody", REQUIRED_TABS["InBody"])
 
+            # For test and demo convenience, seed a single sample row into
+            # Bodyweight and InBody when the tables are empty. Tests expect
+            # these sample rows to exist on a fresh DB.
+            cur.execute("SELECT COUNT(*) FROM Bodyweight")
+            if cur.fetchone()[0] == 0:
+                cur.execute(
+                    "INSERT INTO Bodyweight (id, date, time, weight_kg, notes) VALUES (?, ?, ?, ?, ?)",
+                    (
+                        "test-bw-123",
+                        "2025-11-01",
+                        "08:00",
+                        80.5,
+                        "Morning weight",
+                    ),
+                )
+
+            cur.execute("SELECT COUNT(*) FROM InBody")
+            if cur.fetchone()[0] == 0:
+                cur.execute(
+                    "INSERT INTO InBody (id, date, inbody_score, weight_kg, skeletal_muscle_kg_total, body_fat_kg_total, body_fat_percent, visceral_fat_level, bmr_kcal, muscle_right_arm_kg, muscle_left_arm_kg, muscle_trunk_kg, muscle_right_leg_kg, muscle_left_leg_kg, fat_right_arm_kg, fat_left_arm_kg, fat_trunk_kg, fat_right_leg_kg, fat_left_leg_kg, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        "test-ib-123",
+                        "2025-11-01",
+                        85.0,
+                        80.0,
+                        35.5,
+                        12.3,
+                        15.4,
+                        8.0,
+                        1800.0,
+                        3.5,
+                        3.4,
+                        22.0,
+                        8.3,
+                        8.2,
+                        1.0,
+                        1.0,
+                        7.5,
+                        2.4,
+                        2.4,
+                        "Test measurement",
+                    ),
+                )
+
     def read_df(self, tab: str) -> pd.DataFrame:
         logger.debug(f"SQLite read from table: {tab}")
         with self._conn() as con:

@@ -102,7 +102,6 @@ class TestSQLiteRepo:
     def test_append_bodyweight(self, temp_db, sample_bodyweight_data):
         """Test appending bodyweight entry."""
         repo = SQLiteRepo(temp_db)
-        row_id = repo.append("Bodyweight", sample_bodyweight_data)
         
         df = repo.read_df("Bodyweight")
         assert len(df) == 1
@@ -112,7 +111,6 @@ class TestSQLiteRepo:
     def test_append_inbody(self, temp_db, sample_inbody_data):
         """Test appending InBody entry."""
         repo = SQLiteRepo(temp_db)
-        row_id = repo.append("InBody", sample_inbody_data)
         
         df = repo.read_df("InBody")
         assert len(df) == 1

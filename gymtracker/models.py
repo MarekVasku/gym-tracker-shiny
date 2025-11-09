@@ -1,4 +1,8 @@
 from __future__ import annotations
+import datetime
+from typing import Optional
+from pydantic import BaseModel, Field, validator
+from gymtracker.utils import BIG3
 
 """Pydantic v1 models for data validation.
 
@@ -6,11 +10,6 @@ This project currently pins `pydantic<2.0` in the project manifests, so
 we keep the v1 API (`validator`, `Config`) to match the pinned dependency
 and avoid language-server/runtime mismatches.
 """
-from pydantic import BaseModel, Field, validator
-import datetime
-from typing import Optional
-from gymtracker.utils import BIG3
-
 
 class LiftEntry(BaseModel):
     """Validation model for lift entries."""

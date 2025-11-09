@@ -310,7 +310,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         sel = _normalize_pick(raw, lifts_df(), ["exercise", "weight_kg", "reps"])
         r = lifts_df().loc[lifts_df()["id"] == sel]
         if r.empty:
-            ui.notification_show("Pick a lift to load", type="warning"); return
+            ui.notification_show("Pick a lift to load", type="warning")
+            return
         row = r.iloc[0]
         session.send_input_message("lift_date", {"value": str(row["date"])})
         session.send_input_message("lift_ex", {"value": row.get("exercise")})
@@ -327,10 +328,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_save_lift)
     def _edit_lift():
         r = get_repo()
-        if not r: return
+        if not r:
+            return
         sel = _normalize_pick(input.lift_pick(), lifts_df(), ["exercise", "weight_kg", "reps"])
         if not sel:
-            ui.notification_show("Pick a lift to save", type="warning"); return
+            ui.notification_show("Pick a lift to save", type="warning")
+            return
         r.update("Lifts", sel, {
             "date": input.lift_date(),
             "exercise": input.lift_ex(),
@@ -344,10 +347,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_del_lift)
     def _delete_lift():
         r = get_repo()
-        if not r: return
+        if not r:
+            return
         sel = _normalize_pick(input.lift_pick(), lifts_df(), ["exercise", "weight_kg", "reps"])
         if not sel:
-            ui.notification_show("Pick a lift to delete", type="warning"); return
+            ui.notification_show("Pick a lift to delete", type="warning")
+            return
         r.delete("Lifts", sel)
         ui.notification_show("Lift deleted.")
 
@@ -372,7 +377,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         sel = _normalize_pick(raw, bw_df(), ["weight_kg"])
         r = bw_df().loc[bw_df()["id"] == sel]
         if r.empty:
-            ui.notification_show("Pick a record to load", type="warning"); return
+            ui.notification_show("Pick a record to load", type="warning")
+            return
         row = r.iloc[0]
         session.send_input_message("bw_date", {"value": str(row["date"])})
         session.send_input_message("bw_weight", {"value": float(row.get("weight_kg") or 0)})
@@ -395,10 +401,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_save_bw)
     def _edit_bw():
         r = get_repo()
-        if not r: return
+        if not r:
+            return
         sel = _normalize_pick(input.bw_pick(), bw_df(), ["weight_kg"])
         if not sel:
-            ui.notification_show("Pick a bodyweight record to save", type="warning"); return
+            ui.notification_show("Pick a bodyweight record to save", type="warning")
+            return
         if input.bw_use_now():
             tstr = datetime.now().strftime("%H:%M")
         else:
@@ -420,11 +428,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_del_bw)
     def _delete_bw():
         r = get_repo()
-        if not r: return
+        if not r:
+            return
         raw = input.bw_pick()
         norm = _normalize_pick(raw, bw_df(), ["weight_kg"])
         if not norm:
-            ui.notification_show("Could not determine record id to delete", type="warning"); return
+            ui.notification_show("Could not determine record id to delete", type="warning")
+            
+            return
         try:
             r.delete("Bodyweight", norm)
         except Exception as e:
@@ -453,7 +464,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         sel = _normalize_pick(raw, meas_df(), ["chest_cm", "waist_cm", "biceps_cm"])
         r = meas_df().loc[meas_df()["id"] == sel]
         if r.empty:
-            ui.notification_show("Pick a record to load", type="warning"); return
+            ui.notification_show("Pick a record to load", type="warning")
+            return
         row = r.iloc[0]
         session.send_input_message("m_date", {"value": str(row["date"])})
         session.send_input_message("m_weight", {"value": float(row.get("weight_kg") or 0)})
@@ -490,10 +502,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_save_meas)
     def _edit_meas():
         r = get_repo()
-        if not r: return
+        if not r: 
+            return
         sel = _normalize_pick(input.m_pick(), meas_df(), ["chest_cm", "waist_cm", "biceps_cm"])
         if not sel:
-            ui.notification_show("Pick a measurement to save", type="warning"); return
+            ui.notification_show("Pick a measurement to save", type="warning")
+            return
         r.update("Measurements", sel, {
             "date": input.m_date(),
             "weight_kg": _normalize_decimal(input.m_weight()),
@@ -511,10 +525,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_del_meas)
     def _delete_meas():
         r = get_repo()
-        if not r: return
+        if not r:
+            return
         sel = _normalize_pick(input.m_pick(), meas_df(), ["chest_cm", "waist_cm", "biceps_cm"])
         if not sel:
-            ui.notification_show("Pick a measurement to delete", type="warning"); return
+            ui.notification_show("Pick a measurement to delete", type="warning")
+            return
         r.delete("Measurements", sel)
         ui.notification_show("Measurements deleted.")
 
@@ -571,7 +587,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         norm = _normalize_pick(sel, inbody_df(), ["inbody_score", "weight_kg"])
         r = inbody_df().loc[inbody_df()["id"] == norm]
         if r.empty:
-            ui.notification_show("Pick an InBody entry to load", type="warning"); return
+            ui.notification_show("Pick an InBody entry to load", type="warning")
+            return
         row = r.iloc[0]
         session.send_input_message("ib_date", {"value": str(row["date"])})
         session.send_input_message("ib_score", {"value": float(row.get("inbody_score") or 0)})
@@ -602,10 +619,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_save_ib)
     def _edit_inbody():
         r = get_repo()
-        if not r: return
+        if not r: 
+            return
         sel = input.ib_pick()
         if not sel:
-            ui.notification_show("Pick an InBody entry to save", type="warning"); return
+            ui.notification_show("Pick an InBody entry to save", type="warning")
+            return
         r.update("InBody", sel, {
             "date": input.ib_date(),
             "inbody_score": _normalize_decimal(input.ib_score()),
@@ -633,11 +652,13 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(input.btn_del_ib)
     def _delete_inbody():
         r = get_repo()
-        if not r: return
+        if not r: 
+            return
         sel = input.ib_pick()
         norm = _normalize_pick(sel, inbody_df(), ["inbody_score", "weight_kg"])
         if not norm:
-            ui.notification_show("Could not determine record id to delete", type="warning"); return
+            ui.notification_show("Could not determine record id to delete", type="warning")
+            return
         try:
             r.delete("InBody", norm)
         except Exception as e:

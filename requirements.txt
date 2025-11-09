@@ -13,5 +13,5 @@ pytest-cov>=4.1
 jinja2>=3.1.6
 python-dotenv>=1.2.1
 libsass>=0.23.0
-pydantic>=1.10,<2.0
+pydantic>=1.10,<3.0
 # Google Sheets removed; use SQLite only

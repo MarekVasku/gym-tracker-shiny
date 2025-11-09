@@ -19,6 +19,9 @@ Create a venv and install dependencies:
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# Optional: install developer tools
+pip install -r requirements.txt pre-commit mypy ruff isort black
 ```
 
 Run the app locally (development reload enabled):
@@ -72,6 +75,16 @@ make run          # start the Shiny app with reload
 
 ```bash
 pytest -q
+```
+
+Pre-commit
+---------
+Install pre-commit hooks locally and run them before commits:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
 ```
 
 - The project provides both `pyproject.toml` and `requirements.txt`. Use whichever suits your workflow (poetry/uv/venv/pip).

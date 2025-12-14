@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 import uuid
 from datetime import date, datetime
 from typing import Protocol
 
 import pandas as pd
+import gspread
+from gspread.exceptions import WorksheetNotFound
+from gspread.utils import rowcol_to_a1
+from google.oauth2.service_account import Credentials
 from pydantic import ValidationError
 
-from .config import db_path
+from .config import SheetsConfig, db_path, sheets_config
 from .logger import logger
 from .models import BodyweightEntry, InBodyEntry, LiftEntry, MeasurementEntry
 from .utils import REQUIRED_TABS
@@ -222,13 +227,244 @@ class SQLiteRepo:
         logger.info(f"SQLite deleted {tab} id={row_id}")
 
 
+class SheetsRepo:
+    """Secondary repo that mirrors Bodyweight entries into a Google Sheet.
+
+    The worksheet must contain headers matching REQUIRED_TABS["Bodyweight"].
+    Only Bodyweight is handled; other tables are ignored (best-effort no-ops).
+    
+    Handles format conversions between app (ISO format) and Sheet (DD/MM/YYYY, HH:MM:SS).
+    """
+
+    def __init__(self, cfg: SheetsConfig):
+        self.cfg = cfg
+        self.columns = REQUIRED_TABS["Bodyweight"]
+        self.sheet = self._init_sheet()
+        self._ensure_headers()
+        logger.info(
+            "SheetsRepo initialized for worksheet %s in spreadsheet %s",
+            cfg.worksheet,
+            cfg.spreadsheet_id,
+        )
+
+    def _client(self):
+        scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+        if self.cfg.credentials_json:
+            info = json.loads(self.cfg.credentials_json)
+            creds = Credentials.from_service_account_info(info, scopes=scopes)
+            return gspread.authorize(creds)
+        if self.cfg.credentials_file:
+            return gspread.service_account(filename=self.cfg.credentials_file, scopes=scopes)
+        raise RuntimeError("No Sheets credentials provided")
+
+    def _init_sheet(self):
+        client = self._client()
+        sh = client.open_by_key(self.cfg.spreadsheet_id)
+        try:
+            return sh.worksheet(self.cfg.worksheet)
+        except WorksheetNotFound:
+            return sh.add_worksheet(title=self.cfg.worksheet, rows=1000, cols=len(self.columns))
+
+    def _ensure_headers(self):
+        existing = self.sheet.row_values(1)
+        if existing != self.columns:
+            self.sheet.update("A1", [self.columns])
+
+    def _iso_to_sheet_date(self, iso_date: str) -> str:
+        """Convert YYYY-MM-DD to DD/MM/YYYY."""
+        try:
+            parsed = datetime.strptime(iso_date, "%Y-%m-%d")
+            return parsed.strftime("%d/%m/%Y")
+        except Exception:
+            return iso_date
+
+    def _sheet_date_to_iso(self, sheet_date: str) -> str:
+        """Convert DD/MM/YYYY to YYYY-MM-DD."""
+        try:
+            parsed = datetime.strptime(sheet_date, "%d/%m/%Y")
+            return parsed.strftime("%Y-%m-%d")
+        except Exception:
+            return sheet_date
+
+    def _iso_to_sheet_time(self, iso_time: str) -> str:
+        """Convert HH:MM to HH:MM:SS."""
+        if not iso_time or iso_time == "":
+            return ""
+        if len(iso_time) == 5 and iso_time.count(":") == 1:
+            return f"{iso_time}:00"
+        return iso_time
+
+    def _sheet_time_to_iso(self, sheet_time: str) -> str:
+        """Convert HH:MM:SS to HH:MM."""
+        if not sheet_time or sheet_time == "":
+            return ""
+        parts = sheet_time.split(":")
+        if len(parts) >= 2:
+            return f"{parts[0]}:{parts[1]}"
+        return sheet_time
+
+    def _find_row(self, row_id: str) -> int | None:
+        # Search id column (col 1) for matching id
+        ids = self.sheet.col_values(1)
+        for idx, val in enumerate(ids, start=1):
+            if str(val).strip() == str(row_id):
+                return idx
+        return None
+
+    def read_df(self, tab: str) -> pd.DataFrame:
+        if tab != "Bodyweight":
+            return pd.DataFrame(columns=REQUIRED_TABS.get(tab, []))
+        try:
+            # Read raw values to allow flexible headers and missing IDs
+            values = self.sheet.get_all_values()
+            if not values:
+                logger.debug("SheetsRepo: no values in worksheet")
+                return pd.DataFrame(columns=self.columns)
+            headers = [h.strip() for h in (values[0] if values else [])]
+            rows = values[1:] if len(values) > 1 else []
+            df = pd.DataFrame(rows, columns=headers if rows else headers)
+            logger.debug(f"SheetsRepo raw rows={len(rows)} headers={headers}")
+            # Standardize column names (aliases supported)
+            alias_map = {
+                "id": "id",
+                "date": "date",
+                "time": "time",
+                "weight": "weight_kg",
+                "weight_kg": "weight_kg",
+                "notes": "notes",
+            }
+            df = df.rename(columns={c: alias_map.get(c.strip().lower(), c.strip().lower()) for c in df.columns})
+            # Ensure required columns exist
+            for col in ["id","date","time","weight_kg","notes"]:
+                if col not in df.columns:
+                    df[col] = None
+            # Auto-generate id if missing/empty using date+time
+            def _gen_id(row):
+                rid = str(row.get("id") or "").strip()
+                if rid:
+                    return rid
+                d = str(row.get("date") or "").strip()
+                t = str(row.get("time") or "").strip()
+                return f"{d} {t}" if d or t else None
+            df["id"] = df.apply(_gen_id, axis=1)
+            # Convert date strings to date objects (DD/MM/YYYY or YYYY-MM-DD)
+            def _to_date(s):
+                s = str(s or "").strip()
+                for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d.%m.%Y"):
+                    try:
+                        return datetime.strptime(s, fmt).date()
+                    except Exception:
+                        continue
+                return pd.NaT
+            df["date"] = df["date"].apply(_to_date)
+            # Coerce weight to float
+            df["weight_kg"] = pd.to_numeric(df["weight_kg"], errors="coerce")
+            # Keep only app columns
+            df = df[["id","date","time","weight_kg","notes"]]
+            # Drop rows where all are NaN/empty
+            df = df.dropna(how="all")
+            logger.debug(f"SheetsRepo normalized df rows={len(df)}\n{df.to_string()}")
+            return df
+        except Exception:
+            logger.exception("SheetsRepo.read_df failed")
+            return pd.DataFrame(columns=self.columns)
+
+    def append(self, tab: str, payload: dict) -> str:
+        if tab != "Bodyweight":
+            return payload.get("id") or ""
+        _validate_payload(tab, payload)
+        row_id = payload.get("id") or str(uuid.uuid4())
+        payload = {**payload, "id": row_id}
+        values: list[object] = []
+        for c in self.columns:
+            v = payload.get(c)
+            if c == "date" and isinstance(v, (date, datetime)):
+                # Convert ISO date to Sheet format (DD/MM/YYYY)
+                values.append(self._iso_to_sheet_date(v.isoformat() if isinstance(v, datetime) else str(v)))
+            elif c == "time" and v:
+                # Convert ISO time to Sheet format (HH:MM:SS)
+                values.append(self._iso_to_sheet_time(str(v)))
+            elif isinstance(v, (date, datetime)):
+                values.append(v.isoformat())
+            else:
+                values.append(v)
+        self.sheet.append_rows([values], value_input_option="RAW")
+        logger.info("Sheets appended Bodyweight id=%s", row_id)
+        return row_id
+
+    def update(self, tab: str, row_id: str, payload: dict) -> None:
+        if tab != "Bodyweight":
+            return
+        row_num = self._find_row(row_id)
+        if not row_num:
+            raise ValueError(f"Row id {row_id} not found in Sheets")
+        values: list[object] = []
+        for c in self.columns:
+            v = payload.get(c)
+            if c == "date" and isinstance(v, (date, datetime)):
+                # Convert ISO date to Sheet format (DD/MM/YYYY)
+                values.append(self._iso_to_sheet_date(v.isoformat() if isinstance(v, datetime) else str(v)))
+            elif c == "time" and v:
+                # Convert ISO time to Sheet format (HH:MM:SS)
+                values.append(self._iso_to_sheet_time(str(v)))
+            elif isinstance(v, (date, datetime)):
+                values.append(v.isoformat())
+            else:
+                values.append(v)
+        start = rowcol_to_a1(row_num, 1)
+        end = rowcol_to_a1(row_num, len(self.columns))
+        self.sheet.update(f"{start}:{end}", [values], value_input_option="RAW")
+        logger.info("Sheets updated Bodyweight id=%s", row_id)
+
+    def delete(self, tab: str, row_id: str) -> None:
+        if tab != "Bodyweight":
+            return
+        row_num = self._find_row(row_id)
+        if not row_num:
+            logger.warning("Sheets delete skipped; id=%s not found", row_id)
+            return
+        self.sheet.delete_rows(row_num)
+        logger.info("Sheets deleted Bodyweight id=%s", row_id)
+
+
 class CombinedRepo:
     def __init__(self, primary: Repo, secondary: Repo):
         self.primary = primary
         self.secondary = secondary
 
     def read_df(self, tab: str) -> pd.DataFrame:
-        return self.primary.read_df(tab)
+        """Read from primary and merge with secondary (secondary only for Bodyweight)."""
+        primary_df = self.primary.read_df(tab)
+        logger.debug(f"CombinedRepo primary read {tab}: {len(primary_df)} rows")
+        
+        # Only merge Bodyweight from secondary Sheets
+        if tab != "Bodyweight":
+            return primary_df
+        
+        try:
+            secondary_df = self.secondary.read_df(tab)
+            logger.debug(f"CombinedRepo secondary read {tab}: {len(secondary_df)} rows")
+        except Exception:
+            logger.warning("Secondary read failed for %s; returning primary only", tab, exc_info=True)
+            return primary_df
+        
+        if secondary_df.empty:
+            logger.debug(f"CombinedRepo secondary df is empty for {tab}")
+            return primary_df
+        
+        # Merge: combine both dataframes and deduplicate by id or date+time fallback
+        combined = pd.concat([primary_df, secondary_df], ignore_index=True)
+        logger.debug(f"CombinedRepo combined before dedup: {len(combined)} rows")
+        if not combined.empty and "id" in combined.columns:
+            tmp_id = combined["id"].fillna("").astype(str).str.strip()
+            fallback = (
+                combined.get("date").astype(str).str.strip() + " " + combined.get("time").astype(str).str.strip()
+            ).str.strip()
+            combined["_key"] = tmp_id.where(tmp_id != "", fallback)
+            combined = combined.drop_duplicates(subset=["_key"], keep="first").drop(columns=["_key"], errors="ignore")
+        logger.debug(f"CombinedRepo combined after dedup: {len(combined)} rows\n{combined.to_string()}")
+        
+        return combined
 
     def append(self, tab: str, payload: dict) -> str:
         row_id = self.primary.append(tab, payload)
@@ -254,8 +490,26 @@ class CombinedRepo:
 
 
 def repo_factory() -> Repo:
-    """Return a SQLite-only repository (Sheets support removed)."""
-    return SQLiteRepo()
+    """Return a repository, optionally writing through to Google Sheets for Bodyweight."""
+    primary = SQLiteRepo()
+    cfg = sheets_config()
+    if not cfg:
+        logger.info("Sheets config not found; using SQLite only")
+        return primary
+    logger.info(
+        "Sheets config detected: spreadsheet_id=%s worksheet=%s creds_file=%s creds_json=%s",
+        cfg.spreadsheet_id,
+        cfg.worksheet,
+        (cfg.credentials_file or ""),
+        "set" if cfg.credentials_json else ""
+    )
+    try:
+        secondary = SheetsRepo(cfg)
+        logger.info("Using CombinedRepo with Sheets secondary for Bodyweight")
+        return CombinedRepo(primary, secondary)
+    except Exception:
+        logger.warning("Falling back to SQLite only; Sheets init failed", exc_info=True)
+        return primary
 
 
 # --- Validation helper ---

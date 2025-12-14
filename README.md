@@ -39,6 +39,22 @@ Configure the SQLite database path via environment variable. Example (bash):
 ```bash
 # Path to sqlite DB (default: ./gym_tracker.db)
 export DB_PATH=./gym_tracker.db
+
+Enable Google Sheets mirror (Bodyweight only)
+--------------------------------------------
+If you want bodyweight entries to also write to a Google Sheet, provide a service account and target sheet:
+
+```bash
+export SHEETS_SPREADSHEET_ID=<your-spreadsheet-id>
+export SHEETS_BODYWEIGHT_SHEET=Sheet1       # optional, defaults to Bodyweight
+
+# Either point to a service account file...
+export SHEETS_CREDENTIALS_FILE=/path/to/creds.json
+# ...or inline the JSON (use with care)
+# export SHEETS_CREDENTIALS_JSON='{"type": "service_account", ...}'
+```
+
+On startup the app will keep SQLite as primary storage and best-effort mirror Bodyweight writes to the sheet.
 ```
 
 Schema migration: removing legacy measurement columns

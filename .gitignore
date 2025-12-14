@@ -61,6 +61,7 @@ Thumbs.db
 
 # Application specific
 .cache/
+service_account.json
 
 # Testing
 .pytest_cache/
@@ -78,3 +79,4 @@ dmypy.json
 
 # Debug
 cython_debug/
+personal-data-tools-key.json

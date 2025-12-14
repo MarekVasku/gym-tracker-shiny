@@ -35,6 +35,30 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     def _init_repo():
         repo.set(repo_factory())
+        # Debug: print Bodyweight data from both sources at startup
+        try:
+            r = repo.get()
+            if r and hasattr(r, 'read_df'):
+                df = r.read_df("Bodyweight")
+                print(f"[DEBUG] Bodyweight df rows: {0 if df is None else len(df)}")
+                if df is not None and not df.empty:
+                    print("[DEBUG] Bodyweight df sample:\n" + df.head(10).to_string(index=False))
+                else:
+                    print("[DEBUG] Bodyweight df is empty")
+                # If using CombinedRepo, also print raw Google Sheet dataframe for verification
+                try:
+                    if hasattr(r, 'secondary') and r.secondary is not None:
+                        gdf = r.secondary.read_df("Bodyweight")
+                        if gdf is None or gdf.empty:
+                            print("[DEBUG] Google Sheet Bodyweight is empty or not readable")
+                        else:
+                            print("[DEBUG] Google Sheet Bodyweight full df:\n" + gdf.to_string(index=False))
+                    else:
+                        print("[DEBUG] No Sheets secondary repo attached")
+                except Exception as ge:
+                    print(f"[DEBUG] Failed to read Google Sheet Bodyweight df: {ge}")
+        except Exception as e:
+            print(f"[DEBUG] Failed to read Bodyweight df: {e}")
 
     # Dataframes
     @reactive.calc

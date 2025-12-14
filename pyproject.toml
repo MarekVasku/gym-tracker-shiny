@@ -24,6 +24,7 @@ dependencies = [
   "libsass>=0.23.0",
   "shinywidgets>=0.7.0",
   "pydantic>=1.10,<3.0",
+  "gspread>=6.1.0",
 ]
 
 [project.optional-dependencies]
